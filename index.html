@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#f8fafc">
+    <meta name="theme-color" content="#020617">
     <title>Tito-Trans | Sistema Gerencial VIP</title>
     
     <!-- Tailwind CSS -->
@@ -245,13 +245,29 @@
                     </div>
                 </div>
 
-                <!-- 3. HISTORIAL SEPARADO -->
+                <!-- 3. HISTORIAL SEPARADO CON FILTRO GERENCIAL -->
                 <div id="tab-historial" class="tab-content hidden space-y-6 fade-in h-full">
                     <div class="bg-white border border-slate-200 rounded-[1.5rem] card-shadow overflow-hidden flex flex-col h-full">
-                        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 shrink-0">
+                        <div class="px-6 py-5 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center bg-slate-50/80 shrink-0 gap-4">
                             <h3 class="text-sm font-extrabold text-slate-800 flex items-center"><i class="fas fa-history text-brand-500 mr-2"></i> Historial de Movimientos</h3>
-                            <button onclick="exportToExcel()" class="admin-only hidden px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors shadow-sm flex items-center gap-2"><i class="fas fa-file-excel text-emerald-500"></i> Exportar</button>
+                            
+                            <!-- Filtro Gerencial -->
+                            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                                <div class="admin-only hidden flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Pasajera:</span>
+                                    <select id="filter-pax" onchange="renderData()" class="text-xs font-bold text-slate-700 outline-none bg-transparent cursor-pointer">
+                                        <option value="">Todas</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Mes:</span>
+                                    <input type="month" id="filter-month" onchange="renderData()" class="text-xs font-bold text-slate-700 outline-none bg-transparent">
+                                </div>
+                                <button onclick="resetFilters()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors" title="Limpiar Filtros"><i class="fas fa-redo"></i></button>
+                                <button onclick="exportToExcel()" class="admin-only hidden px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-[10px] font-black uppercase transition-colors shadow-sm flex items-center gap-2"><i class="fas fa-file-excel"></i> Exportar</button>
+                            </div>
                         </div>
+
                         <div class="overflow-x-auto p-2 md:p-0 flex-1 hide-scrollbar">
                             <table class="w-full text-left resp-table" id="export-table">
                                 <thead class="border-b border-slate-100 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest hidden md:table-header-group bg-slate-50">
@@ -263,7 +279,7 @@
                     </div>
                 </div>
 
-                <!-- 4. CENTRO DE CARGA -->
+                <!-- 4. CENTRO DE CARGA CON SELECCION MULTIPLE DE DIAS -->
                 <div id="tab-carga" class="tab-content hidden space-y-6 fade-in">
                     <div class="max-w-2xl mx-auto bg-white border border-slate-200 rounded-[1.5rem] card-shadow overflow-hidden">
                         <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/80 flex items-center gap-4">
@@ -308,9 +324,15 @@
                                 </div>
                             </div>
 
-                            <div>
-                                <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 ml-1">2. Fecha de la Operación *</label>
-                                <input type="date" id="carga-date" required class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-brand-500 shadow-sm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 ml-1">2. Fecha Inicial / Día Único *</label>
+                                    <input type="date" id="carga-date" required class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-brand-500 shadow-sm">
+                                </div>
+                                <div id="carga-date-end-container">
+                                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 ml-1">Fecha Final (Opcional - Rango)</label>
+                                    <input type="date" id="carga-date-end" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:bg-white focus:border-brand-500 shadow-sm" placeholder="Opcional para varios días">
+                                </div>
                             </div>
 
                             <div id="carga-viaje-opts" class="space-y-4">
@@ -373,7 +395,6 @@
                             </div>
                             
                             <div class="flex items-center gap-2 pointer-events-auto">
-                                <!-- Selector para que Tito elija a qué pasajera ir a ver -->
                                 <select id="select-target-pax" onchange="selectTargetPassenger(this.value)" class="admin-only hidden px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 shadow-lg outline-none cursor-pointer">
                                     <option value="">Seleccionar Pasajera...</option>
                                 </select>
@@ -384,7 +405,7 @@
                             </div>
                         </div>
 
-                        <!-- Botón flotante para centrar la cámara en la ubicación actual en tiempo real -->
+                        <!-- Botón flotante para centrar la cámara -->
                         <button onclick="recenterMap()" class="absolute bottom-6 right-6 z-20 w-14 h-14 bg-white text-slate-700 hover:text-brand-600 rounded-full shadow-2xl border border-slate-200 flex items-center justify-center text-xl transition-all hover:scale-105 active:scale-95" title="Centrar en mi ubicación">
                             <i class="fas fa-location-crosshairs"></i>
                         </button>
@@ -452,7 +473,7 @@
         let isTransmitting = false;
         let routeLayer = null;
         let myLastPos = null;
-        let targetPaxId = null; // ID de la pasajera seleccionada por Tito para ir a ver
+        let targetPaxId = null;
         let passengerMarkers = {};
         
         let inactivityTimer = null;
@@ -508,19 +529,18 @@
         }
 
         function initPWA() {
+            // Icono de coche de alta gama basado en imagen estética
+            const iconUrl = "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=512&q=80";
+
             const manifest = {
                 "name":"Tito-Trans Elite", "short_name":"TitoTrans",
                 "start_url": window.location.href.split('?')[0],
                 "display":"standalone", "background_color":"#020617", "theme_color":"#4f46e5",
-                "icons": [{
-                    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMiIgZmlsbD0iIzAyMDYxNyIvPjxwYXRoIGQ9Ik0zNTYgMTgzYy0xOC0zNC01NC01OC05Ni01OHMtNzggMjQtOTYgNThDMTM2IDIyMyAxMjggMjY5IDEyOCAzMTNoMjU2Yy0wLTQ0LTgtOTAtMjgtMTMwWiIgZmlsbD0iIzFmMjkzYiIvPjxwYXRoIGQ9Ik0xMjggMzA0aDI1NnYyNkgxMjh6IiBmaWxsPSIjNGY0NmU1Ii8+PHBhdGggZD0iTTEwNCAxOTJoNzJMMTMyIDE0NGgtNjh6TTQwOCAxOTJoLTcybDQ0LTQ4aDY4eiIgZmlsbD0iIzM4YmRmOGIiLz48Y2lyY2xlIGN4PSIxNzYiIGN5PSIzNDgi rPSIyOCIgZmlsbD0iI2UzZTdlZmYiLz48Y2lyY2xlIGN4PSIzMzYiIGN5PSIzNDgi cj0iMjgiIGZmlsbD0iI2UzZTdlZmYiLz48L3N2Zz4=",
-                    "sizes": "512x512",
-                    "type": "image/svg+xml",
-                    "purpose": "any maskable"
-                }]
+                "icons": [{ "src": iconUrl, "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }]
             };
             const blobManifest = new Blob([JSON.stringify(manifest)], {type:'application/json'});
             document.querySelector('head').insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blobManifest)}">`);
+            document.querySelector('head').insertAdjacentHTML('beforeend', `<link rel="apple-touch-icon" href="${iconUrl}">`);
         }
 
         function showToast(msg, type='success'){
@@ -692,16 +712,18 @@
                     document.getElementById('desk-user-name').innerText = me.name;
                 }
                 
-                // Llenar selector de pasajeras en el mapa para Tito
                 if(userRole === 'admin') {
                     const sel = document.getElementById('select-target-pax');
-                    if(sel) {
-                        let opts = '<option value="">Elegir pasajera a visitar...</option>';
-                        usersDB.filter(u => u.id !== 'tito').forEach(u => {
-                            opts += `<option value="${u.id}">${u.name}</option>`;
-                        });
-                        sel.innerHTML = opts;
-                    }
+                    const filterPax = document.getElementById('filter-pax');
+                    let opts = '<option value="">Elegir pasajera a visitar...</option>';
+                    let filterOpts = '<option value="">Todas</option>';
+                    
+                    usersDB.filter(u => u.id !== 'tito').forEach(u => {
+                        opts += `<option value="${u.id}">${u.name}</option>`;
+                        filterOpts += `<option value="${u.id}">${u.name}</option>`;
+                    });
+                    if(sel) sel.innerHTML = opts;
+                    if(filterPax) filterPax.innerHTML = filterOpts;
                 }
 
             } catch(e) { 
@@ -714,6 +736,14 @@
         function getUserName(id) {
             const u = usersDB.find(x => x.id === id);
             return u ? u.name : id;
+        }
+
+        function resetFilters() {
+            const filterPax = document.getElementById('filter-pax');
+            const filterMonth = document.getElementById('filter-month');
+            if(filterPax) filterPax.value = "";
+            if(filterMonth) filterMonth.value = "";
+            renderData();
         }
 
         function renderData() {
@@ -786,9 +816,19 @@
                 document.getElementById('user-total-trips').innerText = myStats.viajes;
             }
 
+            let displayHistorial = isAdmin ? historial : historial.filter(h => h.pasajera === currentUser);
+            const filterPaxEl = document.getElementById('filter-pax');
+            const filterMonthEl = document.getElementById('filter-month');
+            
+            if(isAdmin && filterPaxEl && filterPaxEl.value) {
+                displayHistorial = displayHistorial.filter(h => h.pasajera === filterPaxEl.value);
+            }
+            if(filterMonthEl && filterMonthEl.value) {
+                displayHistorial = displayHistorial.filter(h => h.fecha.startsWith(filterMonthEl.value));
+            }
+
             const tbody = document.getElementById('history-tbody');
             let rows = '';
-            let displayHistorial = isAdmin ? historial : historial.filter(h => h.pasajera === currentUser);
             
             displayHistorial.forEach(h => {
                 const isViaje = h.type === 'viaje';
@@ -808,7 +848,7 @@
                     <td data-label="Acción" class="p-5 text-center admin-only ${isAdmin?'':'hidden'} pr-6">${actionBtn}</td>
                 </tr>`;
             });
-            tbody.innerHTML = rows || `<tr><td colspan="${isAdmin?6:4}" class="p-8 text-center text-slate-400 font-medium">No hay registros almacenados.</td></tr>`;
+            tbody.innerHTML = rows || `<tr><td colspan="${isAdmin?6:4}" class="p-8 text-center text-slate-400 font-medium">No hay registros con los filtros seleccionados.</td></tr>`;
         }
 
         function renderChart(viajes) {
@@ -834,6 +874,7 @@
             const isViaje = document.querySelector('input[name="tipo_carga"]:checked').value === 'viaje';
             document.getElementById('carga-viaje-opts').classList.toggle('hidden', !isViaje);
             document.getElementById('carga-pago-opts').classList.toggle('hidden', isViaje);
+            document.getElementById('carga-date-end-container').classList.toggle('hidden', !isViaje);
             document.getElementById('carga-user').required = true;
             document.getElementById('carga-monto').required = !isViaje;
         }
@@ -872,7 +913,8 @@
             
             const isViaje = document.querySelector('input[name="tipo_carga"]:checked').value === 'viaje';
             const pasajera = document.getElementById('carga-user').value;
-            const fecha = document.getElementById('carga-date').value;
+            const startDateStr = document.getElementById('carga-date').value;
+            const endDateStr = document.getElementById('carga-date-end').value;
 
             try {
                 if(isViaje) {
@@ -882,12 +924,26 @@
                     const mult = MULT_TURNO[turno] || 1;
                     const finalFare = tarifaBase * mult;
                     
-                    const { error } = await db.from('trips').insert([{ id: 'TRIP_' + Date.now(), passenger_id: pasajera, trip_date: fecha, turn: turno, fare: finalFare }]);
-                    if(error) throw error;
-                    showToast('Viaje sumado exitosamente', 'success');
+                    // Generar fechas en bucle si seleccionó un rango (múltiples días)
+                    let datesToProcess = [startDateStr];
+                    if(endDateStr && endDateStr >= startDateStr) {
+                        let curr = new Date(startDateStr);
+                        let end = new Date(endDateStr);
+                        datesToProcess = [];
+                        while(curr <= end) {
+                            datesToProcess.push(curr.toISOString().split('T')[0]);
+                            curr.setDate(curr.getDate() + 1);
+                        }
+                    }
+
+                    for(let d of datesToProcess) {
+                        const { error } = await db.from('trips').insert([{ id: 'TRIP_' + Date.now() + '_' + Math.floor(Math.random()*1000), passenger_id: pasajera, trip_date: d, turn: turno, fare: finalFare }]);
+                        if(error) throw error;
+                    }
+                    showToast(`Se registraron ${datesToProcess.length} viaje(s) exitosamente`, 'success');
                 } else {
                     const monto = parseFloat(document.getElementById('carga-monto').value);
-                    const { error } = await db.from('payments').insert([{ id: 'PAY_' + Date.now(), passenger_id: pasajera, payment_date: fecha, amount: monto }]);
+                    const { error } = await db.from('payments').insert([{ id: 'PAY_' + Date.now(), passenger_id: pasajera, payment_date: startDateStr, amount: monto }]);
                     if(error) throw error;
                     showToast('Pago registrado correctamente', 'success');
                 }
@@ -930,9 +986,6 @@
             showToast('Excel generado y descargado', 'success');
         }
 
-        // ==========================
-        // GPS TIPO UBER REAL
-        // ==========================
         function initMap() {
             if(map) return;
             map = L.map('map', { zoomControl: false }).setView([-1.0545, -80.4595], 14);
@@ -972,19 +1025,16 @@
 
         async function pollLocations() {
             try {
-                // Obtener ubicación de Tito
                 const { data: titoData } = await db.from('driver_location').select('*').eq('id', 'tito').single();
                 if(titoData) {
                     titoMarker.setLatLng([titoData.lat, titoData.lng]);
                 }
 
                 if(userRole !== 'admin') {
-                    // Pasajera: ve a Tito y calcula ruta hacia él
                     if(titoData && myLastPos) {
                         drawRoute(myLastPos.lat, myLastPos.lng, titoData.lat, titoData.lng, "Tito viene en camino");
                     }
                 } else {
-                    // Tito (Admin): consulta pasajeras
                     const { data: paxList } = await db.from('driver_location').select('*').neq('id', 'tito');
                     if(paxList) {
                         paxList.forEach(pax => {
@@ -1001,7 +1051,6 @@
                             }
                         });
 
-                        // Si Tito seleccionó una pasajera, trazar ruta desde Tito hasta ella
                         if(targetPaxId && passengerMarkers[targetPaxId] && titoData) {
                             const targetLatLng = passengerMarkers[targetPaxId].getLatLng();
                             drawRoute(titoData.lat, titoData.lng, targetLatLng.lat, targetLatLng.lng, `Camino hacia ${getUserName(targetPaxId)}`);
@@ -1086,3 +1135,10 @@
     </script>
 </body>
 </html>
+```
+eof
+
+### ¿Qué se ha añadido?
+1. **Selección de Rango de Fechas (Varios días a la vez):** En el Centro de Carga ahora tienes el campo **Fecha Inicial** y **Fecha Final**. Si seleccionas, por ejemplo, desde el lunes hasta el viernes, la aplicación generará automáticamente un registro de viaje independiente para cada día intermedio en Supabase con un solo clic. Si dejas la fecha final vacía, funcionará exactamente igual que antes cargando un solo día.
+2. **Ícono PWA con Imagen Real:** Se ha configurado el manifiesto para usar un elegante ícono fotográfico de coche y compatibilidad completa con dispositivos Apple (iOS) y Android.
+3. **Filtro Gerencial en Historial:** Permite ordenar los movimientos por mes y por pasajera específica.
