@@ -137,6 +137,9 @@
             </nav>
             
             <div class="mt-auto border-t border-slate-800 pt-6">
+                <button onclick="installPWA()" class="btn-install-pwa hidden w-full py-3 mb-3 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 border border-emerald-500/20 hover:border-emerald-500">
+                    <i class="fas fa-download"></i> Instalar App
+                </button>
                 <button onclick="openPasswordModal()" class="w-full py-3 mb-3 bg-slate-800 text-white hover:bg-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2">
                     <i class="fas fa-key"></i> Cambiar Clave
                 </button>
@@ -174,8 +177,7 @@
                     <div class="hidden sm:flex w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-lg shadow-sm text-brand-600">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <!-- Menu Mobile Extra -->
-                    <button onclick="openPasswordModal()" class="md:hidden w-10 h-10 rounded-xl bg-white text-slate-500 border border-slate-200 flex items-center justify-center text-lg shadow-sm hover:bg-slate-50 transition-colors"><i class="fas fa-key"></i></button>
+                    <!-- Menu Mobile Extra Removido para limpiar pantalla, todo está en el menú hamburguesa -->
                 </div>
             </header>
 
@@ -384,19 +386,19 @@
                 </div>
 
                 <!-- 5. TAB: MAPA GPS GOOGLE -->
-                <div id="tab-gps" class="tab-content hidden fade-in h-[600px] max-h-[75vh]">
+                <div id="tab-gps" class="tab-content hidden fade-in h-[calc(100vh-140px)] md:h-[calc(100vh-100px)]">
                     <div class="bg-white border border-slate-200 rounded-[2rem] card-shadow p-2 flex flex-col h-full relative overflow-hidden">
                         <div class="absolute top-6 left-6 right-6 z-20 flex justify-between items-start pointer-events-none">
-                            <div class="bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-slate-100 pointer-events-auto flex items-center gap-4">
-                                <div class="w-10 h-10 bg-brand-50 rounded-full flex items-center justify-center text-brand-600 text-lg"><i class="fas fa-satellite"></i></div>
+                            <div class="bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-slate-100 pointer-events-auto flex items-center gap-4 max-w-[65%]">
+                                <div class="w-10 h-10 bg-brand-50 rounded-full hidden sm:flex items-center justify-center text-brand-600 text-lg"><i class="fas fa-satellite"></i></div>
                                 <div>
                                     <h3 class="text-sm font-black text-slate-800">Rastreo Satelital</h3>
-                                    <p class="text-[10px] text-slate-500 font-bold mt-0.5 uppercase tracking-widest" id="gps-info-text">Motor en Pausa</p>
+                                    <p class="text-[10px] text-brand-600 font-bold mt-0.5 uppercase tracking-widest leading-tight" id="gps-info-text">Motor en Pausa</p>
                                 </div>
                             </div>
                             
-                            <button id="btn-transmit-gps" onclick="toggleGPS()" class="pointer-events-auto px-6 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-floating transition-all flex items-center gap-2">
-                                <i class="fas fa-broadcast-tower"></i> Activar Señal
+                            <button id="btn-transmit-gps" onclick="toggleGPS()" class="pointer-events-auto px-4 md:px-6 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-floating transition-all flex items-center gap-2">
+                                <i class="fas fa-broadcast-tower"></i> <span class="hidden sm:inline">Activar Señal</span><span class="sm:hidden">Iniciar</span>
                             </button>
                         </div>
 
@@ -483,17 +485,21 @@
         let titoMarker = null;
         let watchId = null; 
         let isTransmitting = false;
+        let gpsSubscription = null;
         let passengerMarkers = {};
         let routeLayer = null;
         let myLastPos = null;
+        let targetPaxRoute = null; // Para Tito: Trazar ruta hacia pasajera
         
         let wakeLock = null;
         let inactivityTimer = null;
+        let deferredPrompt = null;
 
         // ==========================
         // INIT & UTILS & INACTIVIDAD
         // ==========================
         window.onload = async () => {
+            initPWA();
             const saved = localStorage.getItem('tito_exec_session');
             if(saved) {
                 const session = JSON.parse(saved);
@@ -515,11 +521,14 @@
             }
         }
 
-        // Listener Global de inactividad
-        ['mousemove', 'keydown', 'touchstart', 'scroll'].forEach(evt => 
-            document.addEventListener(evt, resetInactivity)
-        );
+        // Detectar actividad para reiniciar timer
+        ['mousemove', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+            document.addEventListener(evt, resetInactivity);
+        });
 
+        // ==========================
+        // WAKELOCK (MANTENER PANTALLA ACTIVA)
+        // ==========================
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
@@ -528,6 +537,42 @@
 
         function releaseWakeLock() {
             if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
+        }
+
+        // ==========================
+        // PWA (INSTALACIÓN NATIVA)
+        // ==========================
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.querySelectorAll('.btn-install-pwa').forEach(el => el.classList.remove('hidden'));
+        });
+
+        function installPWA() {
+            if(!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(() => {
+                deferredPrompt = null;
+                document.querySelectorAll('.btn-install-pwa').forEach(el => el.classList.add('hidden'));
+            });
+        }
+
+        function initPWA() {
+            const manifest = {
+                "name":"Tito-Trans Elite",
+                "short_name":"TitoTrans",
+                "start_url": window.location.href.split('?')[0],
+                "display":"standalone",
+                "background_color":"#f8fafc",
+                "theme_color":"#4f46e5",
+                "icons": [{
+                    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzRmNDZlNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAwIiBmaWxsPSJ3aGl0ZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+VDwvdGV4dD48L3N2Zz4=",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml"
+                }]
+            };
+            const blobManifest = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+            document.querySelector('head').insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blobManifest)}">`);
         }
 
         function showToast(msg, type='success'){
@@ -586,6 +631,7 @@
 
         function logout() {
             if(isTransmitting) toggleGPS();
+            if(gpsSubscription) db.removeChannel(gpsSubscription);
             logoutBase();
             window.location.reload();
         }
@@ -1064,6 +1110,7 @@
             if(map) return;
             map = L.map('map', { zoomControl: false }).setView([-1.0545, -80.4595], 14);
             
+            // MAPA DE GOOGLE STREETS (Reemplaza al de CartoDB que pedía API KEY)
             L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                 maxZoom: 20,
                 subdomains:['mt0','mt1','mt2','mt3'],
@@ -1077,7 +1124,7 @@
             });
             titoMarker = L.marker([-1.0545, -80.4595], {icon: iconCar}).addTo(map);
             
-            // Polling Activo para consultar posiciones
+            // Polling Activo
             setInterval(pollLocations, 5000);
         }
 
@@ -1087,7 +1134,6 @@
                 const { data, error } = await db.from('driver_location').select('*').eq('id', 'tito').single();
                 if(!error && data) {
                     titoMarker.setLatLng([data.lat, data.lng]);
-                    
                     if(isTransmitting && myLastPos) {
                         drawRoute(myLastPos.lat, myLastPos.lng, data.lat, data.lng);
                     }
@@ -1098,7 +1144,7 @@
                 if(!error && data) {
                     data.forEach(pax => {
                         const timeDiff = new Date() - new Date(pax.updated_at);
-                        if(timeDiff > 15 * 60 * 1000) return; // Ignorar inactivos de más de 15 min
+                        if(timeDiff > 15 * 60 * 1000) return; // Ignorar inactivos
 
                         if(!passengerMarkers[pax.id]) {
                             const iconPax = L.divIcon({
@@ -1107,18 +1153,23 @@
                                 iconSize: [40, 40], iconAnchor: [20, 20]
                             });
                             passengerMarkers[pax.id] = L.marker([pax.lat, pax.lng], {icon: iconPax}).addTo(map)
-                                .bindPopup(`<b>${getUserName(pax.id)}</b>`);
+                                .bindPopup(`<div class="text-center"><b>${getUserName(pax.id)}</b><br><button onclick="window.targetPaxRoute='${pax.id}'; pollLocations()" class="mt-2 text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg shadow">Trazar Ruta</button></div>`);
                         } else {
                             passengerMarkers[pax.id].setLatLng([pax.lat, pax.lng]);
                         }
                     });
+                    
+                    if(window.targetPaxRoute && passengerMarkers[window.targetPaxRoute] && myLastPos) {
+                        const targetLatLng = passengerMarkers[window.targetPaxRoute].getLatLng();
+                        drawRoute(myLastPos.lat, myLastPos.lng, targetLatLng.lat, targetLatLng.lng);
+                    }
                 }
             }
         }
 
         async function drawRoute(lat1, lng1, lat2, lng2) {
             try {
-                // Open Source Routing Machine
+                // Trazador OSRM (Rutas Viales)
                 const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`);
                 const data = await res.json();
                 if(data.routes && data.routes[0]) {
@@ -1142,16 +1193,17 @@
             const warningBox = document.getElementById('gps-https-warning');
             
             if(isTransmitting) {
+                // Detener
                 if(watchId) clearInterval(watchId);
                 isTransmitting = false;
                 releaseWakeLock();
+                if(routeLayer) map.removeLayer(routeLayer);
                 
-                btn.innerHTML = "<i class='fas fa-broadcast-tower'></i> Activar Señal";
+                btn.innerHTML = "<i class='fas fa-broadcast-tower'></i> <span class='hidden sm:inline'>Activar Señal</span><span class='sm:hidden'>Iniciar</span>";
                 btn.classList.replace('bg-rose-500', 'bg-brand-600');
                 btn.classList.replace('hover:bg-rose-600', 'hover:bg-brand-700');
                 indH.classList.add('hidden'); indH.classList.remove('flex');
                 info.innerText = "Motor en Pausa";
-                if(routeLayer) map.removeLayer(routeLayer);
                 showToast("Transmisión Satelital Detenida", "warning");
             } else {
                 if (!navigator.geolocation) {
@@ -1166,6 +1218,7 @@
                 info.innerText = "Conectando satélites...";
                 requestWakeLock();
                 
+                // Función central de envío
                 const sendLocation = async (pos) => {
                     const { latitude, longitude } = pos.coords;
                     myLastPos = { lat: latitude, lng: longitude };
@@ -1173,9 +1226,9 @@
                     if (userRole === 'admin') {
                         titoMarker.setLatLng([latitude, longitude]);
                         map.setView([latitude, longitude], 16);
-                        info.innerText = "Transmitiendo ruta a las pasajeras";
+                        if(!window.targetPaxRoute) info.innerText = "Transmitiendo ruta a las pasajeras";
                     } else {
-                        // Mi marcador de pasajera
+                        // Mi marcador (Pasajera)
                         if(!passengerMarkers[currentUser]) {
                             const iconMe = L.divIcon({
                                 className: 'custom-div-icon',
@@ -1186,14 +1239,11 @@
                         } else {
                             passengerMarkers[currentUser].setLatLng([latitude, longitude]);
                         }
-                        map.setView([latitude, longitude], 15);
+                        if(!routeLayer) map.setView([latitude, longitude], 15);
                     }
 
-                    await db.from('driver_location').upsert({ 
-                        id: userRole === 'admin' ? 'tito' : currentUser, 
-                        lat: latitude, lng: longitude, 
-                        updated_at: new Date().toISOString() 
-                    });
+                    await db.from('driver_location').upsert({ id: userRole === 'admin' ? 'tito' : currentUser, lat: latitude, lng: longitude, updated_at: new Date().toISOString() });
+                    pollLocations();
                 };
 
                 const handleError = (err) => {
@@ -1204,13 +1254,13 @@
                 // Lectura Inmediata
                 navigator.geolocation.getCurrentPosition(sendLocation, handleError, { enableHighAccuracy: true });
                 
-                // POLLING ACTIVO CADA 5 SEGUNDOS
+                // POLLING ACTIVO (Rastreo Constante)
                 watchId = setInterval(() => {
                     navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
                 }, 5000);
 
                 isTransmitting = true;
-                btn.innerHTML = "<i class='fas fa-stop-circle'></i> Detener Señal";
+                btn.innerHTML = "<i class='fas fa-stop-circle'></i> <span class='hidden sm:inline'>Detener GPS</span><span class='sm:hidden'>Detener</span>";
                 btn.classList.replace('bg-brand-600', 'bg-rose-500');
                 btn.classList.replace('hover:bg-brand-700', 'hover:bg-rose-600');
                 indH.classList.remove('hidden'); indH.classList.add('flex');
