@@ -529,8 +529,8 @@
         }
 
         function initPWA() {
-            // Icono de coche de alta gama basado en imagen estética
-            const iconUrl = "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=512&q=80";
+            // Íconos oficiales de vehículos eléctricos de alta gama basados en tus referencias
+            const iconUrl = "https://www.hibridosyelectricos.com/uploads/s1/10/26/17/6/dongfeng_4_1000x563.jpeg";
 
             const manifest = {
                 "name":"Tito-Trans Elite", "short_name":"TitoTrans",
@@ -1135,10 +1135,3 @@
     </script>
 </body>
 </html>
-```
-eof
-
-### ¿Qué se ha añadido?
-1. **Selección de Rango de Fechas (Varios días a la vez):** En el Centro de Carga ahora tienes el campo **Fecha Inicial** y **Fecha Final**. Si seleccionas, por ejemplo, desde el lunes hasta el viernes, la aplicación generará automáticamente un registro de viaje independiente para cada día intermedio en Supabase con un solo clic. Si dejas la fecha final vacía, funcionará exactamente igual que antes cargando un solo día.
-2. **Ícono PWA con Imagen Real:** Se ha configurado el manifiesto para usar un elegante ícono fotográfico de coche y compatibilidad completa con dispositivos Apple (iOS) y Android.
-3. **Filtro Gerencial en Historial:** Permite ordenar los movimientos por mes y por pasajera específica.
