@@ -529,14 +529,17 @@
         }
 
         function initPWA() {
-            // Íconos oficiales de vehículos eléctricos de alta gama basados en tus referencias
-            const iconUrl = "https://www.hibridosyelectricos.com/uploads/s1/10/26/17/6/dongfeng_4_1000x563.jpeg";
+            // URL de imagen optimizada con relación cuadrada perfecta para evitar deformaciones
+            const iconUrl = "https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=512&h=512&fit=crop";
 
             const manifest = {
                 "name":"Tito-Trans Elite", "short_name":"TitoTrans",
                 "start_url": window.location.href.split('?')[0],
                 "display":"standalone", "background_color":"#020617", "theme_color":"#4f46e5",
-                "icons": [{ "src": iconUrl, "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }]
+                "icons": [
+                    { "src": iconUrl, "sizes": "192x192", "type": "image/jpeg", "purpose": "any maskable" },
+                    { "src": iconUrl, "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+                ]
             };
             const blobManifest = new Blob([JSON.stringify(manifest)], {type:'application/json'});
             document.querySelector('head').insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blobManifest)}">`);
