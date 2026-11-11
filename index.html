@@ -124,7 +124,7 @@
         <!-- OVERLAY PARA MENU MOVIL -->
         <div id="sidebar-overlay" onclick="toggleMenu(false)" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
         
-        <!-- SIDEBAR (UNICO MENÚ HAMBURGUESA PARA PC Y MÓVIL) -->
+        <!-- SIDEBAR -->
         <aside id="sidebar-menu" class="fixed inset-y-0 left-0 z-50 flex flex-col w-[280px] bg-slate-900 border-r border-slate-800 h-screen py-8 px-6 shadow-2xl sidebar-drawer md:sticky md:top-0 md:transform-none transition-transform duration-300">
             <div class="flex items-center justify-between mb-12">
                 <div class="flex items-center gap-4">
@@ -294,10 +294,6 @@
                                 <label class="block text-[10px] font-extrabold text-brand-600 uppercase tracking-widest mb-3 ml-1">1. Selecciona Pasajera *</label>
                                 <select id="carga-user" required onchange="updateUserSummary()" class="w-full px-5 py-4 bg-white border border-indigo-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:border-brand-500 appearance-none shadow-sm cursor-pointer">
                                     <option value="">Despliega para seleccionar...</option>
-                                    <option value="andrea">Andrea</option>
-                                    <option value="stephanie">Stephanie</option>
-                                    <option value="gabriela">Gabriela</option>
-                                    <option value="karen">Karen</option>
                                 </select>
                                 
                                 <div id="carga-user-summary" class="hidden mt-5 pt-5 border-t border-indigo-200/60 flex justify-between items-center">
@@ -362,22 +358,37 @@
                     </div>
                 </div>
 
-                <!-- 5. MAPA GPS -->
+                <!-- 5. MAPA GPS TIPO UBER -->
                 <div id="tab-gps" class="tab-content hidden fade-in h-[600px] max-h-[80vh]">
                     <div class="bg-white border border-slate-200 rounded-[2rem] card-shadow p-2 flex flex-col h-full relative overflow-hidden">
+                        
+                        <!-- Panel Superior Flotante -->
                         <div class="absolute top-6 left-6 right-6 z-20 flex justify-between items-start pointer-events-none">
-                            <div class="bg-white/90 backdrop-blur-md px-5 py-4 rounded-2xl shadow-lg border border-slate-100 pointer-events-auto flex items-center gap-4 max-w-[65%]">
+                            <div class="bg-white/95 backdrop-blur-md px-5 py-4 rounded-2xl shadow-lg border border-slate-100 pointer-events-auto flex items-center gap-4 max-w-[65%]">
                                 <div class="w-10 h-10 bg-brand-50 rounded-full hidden sm:flex items-center justify-center text-brand-600 text-lg"><i class="fas fa-satellite"></i></div>
                                 <div>
-                                    <h3 class="text-sm font-black text-slate-800">Rastreo Satelital</h3>
+                                    <h3 class="text-sm font-black text-slate-800">Navegación en Vivo</h3>
                                     <p class="text-[10px] text-brand-600 font-bold mt-0.5 uppercase tracking-widest leading-tight" id="gps-info-text">Motor en Pausa</p>
                                 </div>
                             </div>
                             
-                            <button id="btn-transmit-gps" onclick="toggleGPS()" class="pointer-events-auto px-4 md:px-6 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-floating transition-all flex items-center gap-2">
-                                <i class="fas fa-broadcast-tower"></i> <span class="hidden sm:inline">Activar Señal</span><span class="sm:hidden">Iniciar</span>
-                            </button>
+                            <div class="flex items-center gap-2 pointer-events-auto">
+                                <!-- Selector para que Tito elija a qué pasajera ir a ver -->
+                                <select id="select-target-pax" onchange="selectTargetPassenger(this.value)" class="admin-only hidden px-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 shadow-lg outline-none cursor-pointer">
+                                    <option value="">Seleccionar Pasajera...</option>
+                                </select>
+
+                                <button id="btn-transmit-gps" onclick="toggleGPS()" class="px-4 md:px-5 py-3.5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-floating transition-all flex items-center gap-2">
+                                    <i class="fas fa-broadcast-tower"></i> <span class="hidden sm:inline">Activar</span>
+                                </button>
+                            </div>
                         </div>
+
+                        <!-- Botón flotante para centrar la cámara en la ubicación actual en tiempo real -->
+                        <button onclick="recenterMap()" class="absolute bottom-6 right-6 z-20 w-14 h-14 bg-white text-slate-700 hover:text-brand-600 rounded-full shadow-2xl border border-slate-200 flex items-center justify-center text-xl transition-all hover:scale-105 active:scale-95" title="Centrar en mi ubicación">
+                            <i class="fas fa-location-crosshairs"></i>
+                        </button>
+
                         <div class="flex-1 rounded-[1.5rem] overflow-hidden bg-slate-100 border border-slate-200 relative">
                             <div id="map"></div>
                         </div>
@@ -439,9 +450,11 @@
         let titoMarker = null;
         let watchId = null; 
         let isTransmitting = false;
-        let gpsSubscription = null;
         let routeLayer = null;
         let myLastPos = null;
+        let targetPaxId = null; // ID de la pasajera seleccionada por Tito para ir a ver
+        let passengerMarkers = {};
+        
         let inactivityTimer = null;
         let wakeLock = null;
         let deferredPrompt = null;
@@ -481,7 +494,6 @@
         });
 
         function installPWA() {
-            // Detección especial para iPhone / Safari
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             if (isIOS) {
                 alert("Para instalar en iPhone: Toca el botón 'Compartir' en Safari y selecciona 'Agregar a Inicio'.");
@@ -499,8 +511,13 @@
             const manifest = {
                 "name":"Tito-Trans Elite", "short_name":"TitoTrans",
                 "start_url": window.location.href.split('?')[0],
-                "display":"standalone", "background_color":"#f8fafc", "theme_color":"#4f46e5",
-                "icons": [{"src": "https://placehold.co/512x512/4f46e5/ffffff?text=T", "sizes": "512x512", "type": "image/png"}]
+                "display":"standalone", "background_color":"#020617", "theme_color":"#4f46e5",
+                "icons": [{
+                    "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjExMiIgZmlsbD0iIzAyMDYxNyIvPjxwYXRoIGQ9Ik0zNTYgMTgzYy0xOC0zNC01NC01OC05Ni01OHMtNzggMjQtOTYgNThDMTM2IDIyMyAxMjggMjY5IDEyOCAzMTNoMjU2Yy0wLTQ0LTgtOTAtMjgtMTMwWiIgZmlsbD0iIzFmMjkzYiIvPjxwYXRoIGQ9Ik0xMjggMzA0aDI1NnYyNkgxMjh6IiBmaWxsPSIjNGY0NmU1Ii8+PHBhdGggZD0iTTEwNCAxOTJoNzJMMTMyIDE0NGgtNjh6TTQwOCAxOTJoLTcybDQ0LTQ4aDY4eiIgZmlsbD0iIzM4YmRmOGIiLz48Y2lyY2xlIGN4PSIxNzYiIGN5PSIzNDgi rPSIyOCIgZmlsbD0iI2UzZTdlZmYiLz48Y2lyY2xlIGN4PSIzMzYiIGN5PSIzNDgi cj0iMjgiIGZmlsbD0iI2UzZTdlZmYiLz48L3N2Zz4=",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                }]
             };
             const blobManifest = new Blob([JSON.stringify(manifest)], {type:'application/json'});
             document.querySelector('head').insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blobManifest)}">`);
@@ -554,7 +571,6 @@
 
         function logout() {
             if(isTransmitting) toggleGPS();
-            if(gpsSubscription) db.removeChannel(gpsSubscription);
             logoutBase();
             window.location.reload();
         }
@@ -573,7 +589,7 @@
             if(newPass.length < 4) return showToast("El pin debe tener mínimo 4 caracteres", "warning");
 
             const btn = document.getElementById('btn-change-pass');
-            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Guardando...'; btn.disabled = true;
+            btn.innerHTML = 'Guardando...'; btn.disabled = true;
 
             try {
                 const { error } = await db.from('users_app').update({ pin: newPass }).eq('id', currentUser);
@@ -675,6 +691,19 @@
                 if(me) {
                     document.getElementById('desk-user-name').innerText = me.name;
                 }
+                
+                // Llenar selector de pasajeras en el mapa para Tito
+                if(userRole === 'admin') {
+                    const sel = document.getElementById('select-target-pax');
+                    if(sel) {
+                        let opts = '<option value="">Elegir pasajera a visitar...</option>';
+                        usersDB.filter(u => u.id !== 'tito').forEach(u => {
+                            opts += `<option value="${u.id}">${u.name}</option>`;
+                        });
+                        sel.innerHTML = opts;
+                    }
+                }
+
             } catch(e) { 
                 showToast("Falla de red con Supabase.", "warning"); 
             }
@@ -901,6 +930,9 @@
             showToast('Excel generado y descargado', 'success');
         }
 
+        // ==========================
+        // GPS TIPO UBER REAL
+        // ==========================
         function initMap() {
             if(map) return;
             map = L.map('map', { zoomControl: false }).setView([-1.0545, -80.4595], 14);
@@ -914,42 +946,72 @@
                 iconSize: [56, 56], iconAnchor: [28, 28]
             });
             titoMarker = L.marker([-1.0545, -80.4595], {icon: iconCar}).addTo(map);
-            setInterval(pollLocations, 5000);
+            setInterval(pollLocations, 4000);
         }
 
-        async function pollLocations() {
-            if(userRole !== 'admin') {
-                const { data, error } = await db.from('driver_location').select('*').eq('id', 'tito').single();
-                if(!error && data) {
-                    titoMarker.setLatLng([data.lat, data.lng]);
-                    if(isTransmitting && myLastPos) drawRoute(myLastPos.lat, myLastPos.lng, data.lat, data.lng);
-                }
+        function recenterMap() {
+            if(myLastPos) {
+                map.setView([myLastPos.lat, myLastPos.lng], 16, { animate: true });
+                showToast("Centrado en tu ubicación", "success");
             } else {
-                const { data, error } = await db.from('driver_location').select('*').neq('id', 'tito');
-                if(!error && data) {
-                    data.forEach(pax => {
-                        if(!window.passengerMarkers) window.passengerMarkers = {};
-                        if(!window.passengerMarkers[pax.id]) {
-                            const iconPax = L.divIcon({
-                                className: 'custom-div-icon',
-                                html: `<div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-lg"><i class="fas fa-female"></i></div>`,
-                                iconSize: [40, 40], iconAnchor: [20, 20]
-                            });
-                            window.passengerMarkers[pax.id] = L.marker([pax.lat, pax.lng], {icon: iconPax}).addTo(map)
-                                .bindPopup(`<div class="text-center font-bold">${getUserName(pax.id)}<br><button onclick="window.targetPaxRoute='${pax.id}'; pollLocations();" class="mt-2 text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg shadow">Ver Ruta</button></div>`);
-                        } else {
-                            window.passengerMarkers[pax.id].setLatLng([pax.lat, pax.lng]);
-                        }
-                    });
-                    if(window.targetPaxRoute && window.passengerMarkers[window.targetPaxRoute] && myLastPos) {
-                        const targetLatLng = window.passengerMarkers[window.targetPaxRoute].getLatLng();
-                        drawRoute(myLastPos.lat, myLastPos.lng, targetLatLng.lat, targetLatLng.lng);
-                    }
-                }
+                showToast("Esperando señal GPS...", "warning");
             }
         }
 
-        async function drawRoute(lat1, lng1, lat2, lng2) {
+        function selectTargetPassenger(paxId) {
+            targetPaxId = paxId;
+            if(!paxId) {
+                if(routeLayer) map.removeLayer(routeLayer);
+                document.getElementById('gps-info-text').innerText = "Ruta libre";
+                showToast("Selección de pasajera cancelada", "warning");
+                return;
+            }
+            showToast(`Ruta fijada hacia ${getUserName(paxId)}`, "success");
+            pollLocations();
+        }
+
+        async function pollLocations() {
+            try {
+                // Obtener ubicación de Tito
+                const { data: titoData } = await db.from('driver_location').select('*').eq('id', 'tito').single();
+                if(titoData) {
+                    titoMarker.setLatLng([titoData.lat, titoData.lng]);
+                }
+
+                if(userRole !== 'admin') {
+                    // Pasajera: ve a Tito y calcula ruta hacia él
+                    if(titoData && myLastPos) {
+                        drawRoute(myLastPos.lat, myLastPos.lng, titoData.lat, titoData.lng, "Tito viene en camino");
+                    }
+                } else {
+                    // Tito (Admin): consulta pasajeras
+                    const { data: paxList } = await db.from('driver_location').select('*').neq('id', 'tito');
+                    if(paxList) {
+                        paxList.forEach(pax => {
+                            if(!passengerMarkers[pax.id]) {
+                                const iconPax = L.divIcon({
+                                    className: 'custom-div-icon',
+                                    html: `<div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-lg"><i class="fas fa-female"></i></div>`,
+                                    iconSize: [40, 40], iconAnchor: [20, 20]
+                                });
+                                passengerMarkers[pax.id] = L.marker([pax.lat, pax.lng], {icon: iconPax}).addTo(map)
+                                    .bindPopup(`<div class="text-center font-bold">${getUserName(pax.id)}<br><button onclick="selectTargetPassenger('${pax.id}'); document.getElementById('select-target-pax').value='${pax.id}';" class="mt-2 text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg shadow">Ir a verla</button></div>`);
+                            } else {
+                                passengerMarkers[pax.id].setLatLng([pax.lat, pax.lng]);
+                            }
+                        });
+
+                        // Si Tito seleccionó una pasajera, trazar ruta desde Tito hasta ella
+                        if(targetPaxId && passengerMarkers[targetPaxId] && titoData) {
+                            const targetLatLng = passengerMarkers[targetPaxId].getLatLng();
+                            drawRoute(titoData.lat, titoData.lng, targetLatLng.lat, targetLatLng.lng, `Camino hacia ${getUserName(targetPaxId)}`);
+                        }
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function drawRoute(lat1, lng1, lat2, lng2, labelInfo) {
             try {
                 const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`);
                 const data = await res.json();
@@ -957,10 +1019,11 @@
                     const route = data.routes[0];
                     const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
                     if(routeLayer) map.removeLayer(routeLayer);
-                    routeLayer = L.polyline(coords, {color: '#4f46e5', weight: 5, opacity: 0.8}).addTo(map);
+                    routeLayer = L.polyline(coords, {color: '#4f46e5', weight: 6, opacity: 0.85}).addTo(map);
+                    
                     const distance = (route.distance / 1000).toFixed(1);
                     const duration = Math.ceil(route.duration / 60);
-                    document.getElementById('gps-info-text').innerHTML = `Distancia: <b>${distance} km</b> | ETA: <b>${duration} min</b>`;
+                    document.getElementById('gps-info-text').innerHTML = `${labelInfo}<br><b>${distance} km</b> • <b>${duration} min</b>`;
                 }
             } catch(e) {}
         }
@@ -969,24 +1032,19 @@
             const btn = document.getElementById('btn-transmit-gps');
             const indH = document.getElementById('gps-indicator-header');
             const info = document.getElementById('gps-info-text');
-            const warningBox = document.getElementById('gps-https-warning');
             
             if(isTransmitting) {
                 if(watchId) clearInterval(watchId);
                 isTransmitting = false;
                 releaseWakeLock();
                 if(routeLayer) map.removeLayer(routeLayer);
-                btn.innerHTML = "<i class='fas fa-broadcast-tower'></i> <span>Activar Señal</span>";
+                btn.innerHTML = "<i class='fas fa-broadcast-tower'></i> <span>Activar</span>";
                 btn.classList.replace('bg-rose-500', 'bg-brand-600');
                 indH.classList.add('hidden'); indH.classList.remove('flex');
                 info.innerText = "Motor en Pausa";
                 showToast("GPS Detenido", "warning");
             } else {
                 if (!navigator.geolocation) return showToast('GPS no soportado', 'error');
-                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                    if(warningBox) warningBox.classList.replace('hidden', 'flex');
-                    return;
-                }
 
                 info.innerText = "Conectando satélites...";
                 requestWakeLock();
@@ -994,20 +1052,19 @@
                 const sendLocation = async (pos) => {
                     const { latitude, longitude } = pos.coords;
                     myLastPos = { lat: latitude, lng: longitude };
+                    
                     if (userRole === 'admin') {
                         titoMarker.setLatLng([latitude, longitude]);
-                        map.setView([latitude, longitude], 16);
                     } else {
-                        if(!window.passengerMarkers) window.passengerMarkers = {};
-                        if(!window.passengerMarkers[currentUser]) {
+                        if(!passengerMarkers[currentUser]) {
                             const iconMe = L.divIcon({
                                 className: 'custom-div-icon',
                                 html: `<div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-lg"><i class="fas fa-street-view"></i></div>`,
                                 iconSize: [40, 40], iconAnchor: [20, 20]
                             });
-                            window.passengerMarkers[currentUser] = L.marker([latitude, longitude], {icon: iconMe}).addTo(map);
+                            passengerMarkers[currentUser] = L.marker([latitude, longitude], {icon: iconMe}).addTo(map);
                         } else {
-                            window.passengerMarkers[currentUser].setLatLng([latitude, longitude]);
+                            passengerMarkers[currentUser].setLatLng([latitude, longitude]);
                         }
                     }
                     await db.from('driver_location').upsert({ id: userRole === 'admin' ? 'tito' : currentUser, lat: latitude, lng: longitude, updated_at: new Date().toISOString() });
@@ -1017,13 +1074,13 @@
                 navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true });
                 watchId = setInterval(() => {
                     navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
-                }, 5000);
+                }, 4000);
 
                 isTransmitting = true;
-                btn.innerHTML = "<i class='fas fa-stop-circle'></i> <span>Detener GPS</span>";
+                btn.innerHTML = "<i class='fas fa-stop-circle'></i> <span>Detener</span>";
                 btn.classList.replace('bg-brand-600', 'bg-rose-500');
                 indH.classList.remove('hidden'); indH.classList.add('flex');
-                showToast("Señal GPS Activada", "success");
+                showToast("GPS Activo en Tiempo Real", "success");
             }
         }
     </script>
