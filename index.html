@@ -384,7 +384,7 @@
             <div id="tab-gps" class="tab-content hidden fade-in h-[calc(100vh-140px)] md:h-[calc(100vh-100px)]">
                 <div class="bg-white border border-slate-200 rounded-[2rem] card-shadow p-2 flex flex-col h-full relative overflow-hidden">
                     
-                    <div class="absolute top-6 left-6 right-6 z-20 flex justify-between items-start pointer-events-none gap-3">
+                    <div class="absolute top-6 left-6 right-6 z-20 flex flex-wrap justify-between items-start pointer-events-none gap-3">
                         <div class="bg-white/95 backdrop-blur-md px-5 py-4 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-slate-100 pointer-events-auto flex items-center gap-4 max-w-[65%]">
                             <div class="w-10 h-10 bg-brand-50 rounded-full hidden sm:flex items-center justify-center text-brand-600 text-lg"><i class="fas fa-satellite"></i></div>
                             <div>
@@ -715,6 +715,16 @@
             loader.classList.remove('hidden');
             
             try {
+                // Sincronización con cola offline si existiera
+                const offlineQueue = JSON.parse(localStorage.getItem('tito_offline_queue') || '[]');
+                if(offlineQueue.length > 0 && navigator.onLine) {
+                    for(const item of offlineQueue) {
+                        await db.from(item.table).insert([item.data]);
+                    }
+                    localStorage.removeItem('tito_offline_queue');
+                    showToast("Sincronización de datos offline completada", "success");
+                }
+
                 const [{ data: trips }, { data: payments }, { data: users }, { data: notifs }] = await Promise.all([
                     db.from('trips').select('*'),
                     db.from('payments').select('*'),
@@ -734,11 +744,10 @@
                     document.getElementById('role-display').innerText = userRole === 'admin' ? 'Administrador' : 'Pasajera';
                 }
 
-                // Llenar selectores dinámicos
                 populateSelects();
 
             } catch(e) {
-                showToast("Sincronizado en modo local / nube", "warning");
+                showToast("Modo sin conexión - Usando caché local", "warning");
             }
             
             renderData();
@@ -766,7 +775,6 @@
             if(filterPax) filterPax.innerHTML = filterOpts;
             if(broadcastRec) broadcastRec.innerHTML = broadOpts;
 
-            // Renderizar tabla de gestión de usuarios si es admin
             if(userRole === 'admin') renderUsersTable();
         }
 
@@ -792,7 +800,6 @@
             
             historial.sort((a,b) => b.dateObj - a.dateObj || b.created - a.created);
 
-            // Filtrado Gerencial en Historial
             const filterMonth = document.getElementById('filter-month')?.value;
             const filterPaxVal = document.getElementById('filter-pax')?.value;
 
@@ -800,7 +807,6 @@
             if(isAdmin && filterPaxVal) filtered = filtered.filter(h => h.pasajera === filterPaxVal);
             if(filterMonth) filtered = filtered.filter(h => h.fecha.startsWith(filterMonth));
 
-            // Estadísticas
             const stats = {};
             usersDB.filter(u => u.id !== 'tito').forEach(u => { stats[u.id] = { deuda: 0, viajes: 0, pagado: 0 }; });
 
@@ -858,7 +864,6 @@
                 document.getElementById('kpi-users-count').innerText = activePax;
                 renderChart(allViajes.filter(v => v.trip_date.startsWith(currentMonth)));
             } else {
-                // DASHBOARD PASAJERA + NOTIFICACIONES IN-APP PERSISTENTES
                 const myStats = stats[currentUser] || {deuda:0, viajes:0};
                 const me = usersDB.find(u => u.id === currentUser);
                 const fare = me ? parseFloat(me.fare) : 0;
@@ -867,7 +872,6 @@
                 document.getElementById('user-rate').innerText = `$${fare.toFixed(2)}`;
                 document.getElementById('user-total-trips').innerText = myStats.viajes;
 
-                // Renderizar Notificaciones para esta pasajera
                 const notifContainer = document.getElementById('user-notifications-banner');
                 const myNotifs = allNotifications.filter(n => n.recipient === 'all' || n.recipient === currentUser);
                 
@@ -892,7 +896,6 @@
                 }
             }
 
-            // TABLA HISTORIAL
             const tbody = document.getElementById('history-tbody');
             let rows = '';
             
@@ -1024,18 +1027,31 @@
                         fare: finalFare
                     }));
 
-                    const { error } = await db.from('trips').insert(batchTrips);
-                    if(error) throw error;
+                    if(navigator.onLine) {
+                        const { error } = await db.from('trips').insert(batchTrips);
+                        if(error) throw error;
+                    } else {
+                        const queue = JSON.parse(localStorage.getItem('tito_offline_queue') || '[]');
+                        batchTrips.forEach(t => queue.push({table: 'trips', data: t}));
+                        localStorage.setItem('tito_offline_queue', JSON.stringify(queue));
+                    }
                     showToast(`${batchTrips.length} viaje(s) registrado(s) con éxito`, 'success');
                 } else {
                     const monto = parseFloat(document.getElementById('carga-monto').value);
-                    const { error } = await db.from('payments').insert([{
+                    const paymentData = {
                         id: 'pay_' + Math.random().toString(36).substr(2, 9),
                         passenger_id: pasajera,
                         payment_date: startDate,
                         amount: monto
-                    }]);
-                    if(error) throw error;
+                    };
+                    if(navigator.onLine) {
+                        const { error } = await db.from('payments').insert([paymentData]);
+                        if(error) throw error;
+                    } else {
+                        const queue = JSON.parse(localStorage.getItem('tito_offline_queue') || '[]');
+                        queue.push({table: 'payments', data: paymentData});
+                        localStorage.setItem('tito_offline_queue', JSON.stringify(queue));
+                    }
                     showToast('Abono registrado correctamente', 'success');
                 }
                 
@@ -1046,7 +1062,7 @@
                 await fetchData();
                 switchTab('tab-dashboard-admin', document.querySelector('#sidebar-nav-links button'));
             } catch(err) {
-                showToast('Error al registrar en Supabase', 'error');
+                showToast('Error al procesar la operación', 'error');
             }
             btn.innerHTML = '<i class="fas fa-check-circle text-lg"></i> Confirmar Operación en Lote'; btn.disabled = false;
         });
