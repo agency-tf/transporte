@@ -247,14 +247,14 @@
                         
                         <div class="flex items-center gap-2 mb-2 relative z-10">
                             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <p class="text-[10px] font-black text-brand-200 uppercase tracking-widest">Deuda por Pagar</p>
+                            <p class="text-[10px] font-black text-brand-200 uppercase tracking-widest">Deuda Pendiente</p>
                         </div>
                         
                         <h3 class="text-5xl md:text-7xl font-black text-white relative z-10 tracking-tight drop-shadow-md" id="user-debt">$0.00</h3>
                         
                         <div class="mt-10 flex flex-wrap gap-4 relative z-10">
                             <div class="bg-white/10 backdrop-blur-md px-5 py-3 rounded-xl border border-white/20 shadow-inner">
-                                <p class="text-[9px] font-bold text-brand-100 uppercase tracking-widest mb-1">Tarifa Base (Viaje)</p>
+                                <p class="text-[9px] font-bold text-brand-100 uppercase tracking-widest mb-1">Tarifa Base Asignada</p>
                                 <p class="text-lg font-black text-white" id="user-rate">$0.00</p>
                             </div>
                             <div class="bg-white/10 backdrop-blur-md px-5 py-3 rounded-xl border border-white/20 shadow-inner">
@@ -265,25 +265,27 @@
                     </div>
                 </div>
 
-                <!-- TABLA HISTORIAL GLOBAL (COMPARTIDA) -->
-                <div id="section-history" class="bg-white border border-slate-200 rounded-[1.5rem] card-shadow overflow-hidden flex flex-col mt-10 fade-in hidden">
-                    <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
-                        <h3 class="text-sm font-extrabold text-slate-800 flex items-center"><i class="fas fa-history text-brand-500 mr-2"></i> Historial de Movimientos</h3>
-                        <button onclick="exportToExcel()" class="admin-only hidden px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors shadow-sm flex items-center gap-2"><i class="fas fa-file-excel text-emerald-500"></i> Exportar</button>
-                    </div>
-                    <div class="overflow-x-auto p-2 md:p-0">
-                        <table class="w-full text-left resp-table" id="export-table">
-                            <thead class="border-b border-slate-100 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest hidden md:table-header-group bg-slate-50">
-                                <tr><th class="p-5 pl-6">Fecha</th><th class="p-5 admin-only hidden">Pasajera</th><th class="p-5">Tipo</th><th class="p-5 text-center">Detalle / Turno</th><th class="p-5 text-right pr-6">Monto ($)</th><th class="p-5 text-center admin-only hidden">Acción</th></tr>
-                            </thead>
-                            <tbody id="history-tbody" class="text-sm font-semibold text-slate-600 divide-y divide-slate-50/80">
-                                <!-- JS Injects -->
-                            </tbody>
-                        </table>
+                <!-- 3. NUEVO TAB: HISTORIAL SEPARADO -->
+                <div id="tab-historial" class="tab-content hidden space-y-6 fade-in h-full">
+                    <div class="bg-white border border-slate-200 rounded-[1.5rem] card-shadow overflow-hidden flex flex-col h-full">
+                        <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 shrink-0">
+                            <h3 class="text-sm font-extrabold text-slate-800 flex items-center"><i class="fas fa-history text-brand-500 mr-2"></i> Historial de Movimientos</h3>
+                            <button onclick="exportToExcel()" class="admin-only hidden px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase hover:text-brand-600 hover:border-brand-200 hover:bg-brand-50 transition-colors shadow-sm flex items-center gap-2"><i class="fas fa-file-excel text-emerald-500"></i> Exportar</button>
+                        </div>
+                        <div class="overflow-x-auto p-2 md:p-0 flex-1 hide-scrollbar">
+                            <table class="w-full text-left resp-table" id="export-table">
+                                <thead class="border-b border-slate-100 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest hidden md:table-header-group bg-slate-50">
+                                    <tr><th class="p-5 pl-6">Fecha</th><th class="p-5 admin-only hidden">Pasajera</th><th class="p-5">Tipo</th><th class="p-5 text-center">Detalle / Turno</th><th class="p-5 text-right pr-6">Monto ($)</th><th class="p-5 text-center admin-only hidden">Acción</th></tr>
+                                </thead>
+                                <tbody id="history-tbody" class="text-sm font-semibold text-slate-600 divide-y divide-slate-50/80">
+                                    <!-- JS Injects -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 3. TAB: CENTRO DE CARGA (TITO) -->
+                <!-- 4. TAB: CENTRO DE CARGA (TITO) -->
                 <div id="tab-carga" class="tab-content hidden space-y-6 fade-in">
                     <div class="max-w-2xl mx-auto bg-white border border-slate-200 rounded-[1.5rem] card-shadow overflow-hidden">
                         <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/80 flex items-center gap-4">
@@ -381,7 +383,7 @@
                     </div>
                 </div>
 
-                <!-- 4. TAB: MAPA GPS GOOGLE -->
+                <!-- 5. TAB: MAPA GPS GOOGLE -->
                 <div id="tab-gps" class="tab-content hidden fade-in h-[600px] max-h-[75vh]">
                     <div class="bg-white border border-slate-200 rounded-[2rem] card-shadow p-2 flex flex-col h-full relative overflow-hidden">
                         <div class="absolute top-6 left-6 right-6 z-20 flex justify-between items-start pointer-events-none">
@@ -393,7 +395,7 @@
                                 </div>
                             </div>
                             
-                            <button id="btn-transmit-gps" onclick="toggleGPS()" class="admin-only hidden pointer-events-auto px-6 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-floating transition-all flex items-center gap-2">
+                            <button id="btn-transmit-gps" onclick="toggleGPS()" class="pointer-events-auto px-6 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-floating transition-all flex items-center gap-2">
                                 <i class="fas fa-broadcast-tower"></i> Activar Señal
                             </button>
                         </div>
@@ -481,9 +483,15 @@
         let titoMarker = null;
         let watchId = null; 
         let isTransmitting = false;
+        let passengerMarkers = {};
+        let routeLayer = null;
+        let myLastPos = null;
+        
+        let wakeLock = null;
+        let inactivityTimer = null;
 
         // ==========================
-        // INIT & UTILS
+        // INIT & UTILS & INACTIVIDAD
         // ==========================
         window.onload = async () => {
             const saved = localStorage.getItem('tito_exec_session');
@@ -491,8 +499,36 @@
                 const session = JSON.parse(saved);
                 await performLogin(session.id, session.clave, true);
             }
-            document.getElementById('carga-date').value = new Date().toISOString().split('T')[0];
+            if(document.getElementById('carga-date')) {
+                document.getElementById('carga-date').value = new Date().toISOString().split('T')[0];
+            }
+            resetInactivity();
         };
+
+        function resetInactivity() {
+            clearTimeout(inactivityTimer);
+            if(currentUser) {
+                inactivityTimer = setTimeout(() => {
+                    showToast("Sesión cerrada por inactividad (15 min).", "warning");
+                    logout();
+                }, 15 * 60 * 1000);
+            }
+        }
+
+        // Listener Global de inactividad
+        ['mousemove', 'keydown', 'touchstart', 'scroll'].forEach(evt => 
+            document.addEventListener(evt, resetInactivity)
+        );
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+            } catch (err) { console.log('WakeLock falló:', err); }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) { wakeLock.release(); wakeLock = null; }
+        }
 
         function showToast(msg, type='success'){
             const container = document.getElementById('toast-container');
@@ -599,10 +635,12 @@
             let deskHtml = '';
             if(isAdmin) {
                 deskHtml += `<button onclick="switchTab('tab-dashboard-admin', this)" class="nav-btn w-full text-left px-5 py-4 rounded-2xl text-sm font-bold text-white bg-brand-600 shadow-md flex items-center gap-3 transition-all"><i class="fas fa-chart-pie w-5 text-center"></i> Panel Ejecutivo</button>`;
+                deskHtml += `<button onclick="switchTab('tab-historial', this)" class="nav-btn w-full text-left px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-3 transition-all"><i class="fas fa-history w-5 text-center"></i> Historial</button>`;
                 deskHtml += `<button onclick="switchTab('tab-carga', this)" class="nav-btn w-full text-left px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-3 transition-all"><i class="fas fa-cash-register w-5 text-center"></i> Centro de Carga</button>`;
                 deskHtml += `<button onclick="switchTab('tab-gps', this)" class="nav-btn w-full text-left px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-3 transition-all"><i class="fas fa-satellite-dish w-5 text-center"></i> Mapa GPS</button>`;
             } else {
                 deskHtml += `<button onclick="switchTab('tab-dashboard-user', this)" class="nav-btn w-full text-left px-5 py-4 rounded-2xl text-sm font-bold text-white bg-brand-600 shadow-md flex items-center gap-3 transition-all"><i class="fas fa-wallet w-5 text-center"></i> Mi Billetera</button>`;
+                deskHtml += `<button onclick="switchTab('tab-historial', this)" class="nav-btn w-full text-left px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-3 transition-all"><i class="fas fa-history w-5 text-center"></i> Historial</button>`;
                 deskHtml += `<button onclick="switchTab('tab-gps', this)" class="nav-btn w-full text-left px-5 py-4 rounded-2xl text-sm font-bold text-slate-400 hover:bg-slate-800 hover:text-white flex items-center gap-3 transition-all"><i class="fas fa-satellite-dish w-5 text-center"></i> Vehículo en Vivo</button>`;
             }
             deskNav.innerHTML = deskHtml;
@@ -611,12 +649,14 @@
             const mobNav = document.getElementById('bottom-nav');
             let mobHtml = '';
             if(isAdmin) {
-                mobHtml += `<button onclick="switchTab('tab-dashboard-admin', null, this)" class="nav-item active flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-2xl text-xl"><i class="fas fa-chart-pie"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Inicio</span></button>`;
-                mobHtml += `<button onclick="switchTab('tab-carga', null, this)" class="nav-item flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-2xl text-xl"><i class="fas fa-plus"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Carga</span></button>`;
-                mobHtml += `<button onclick="switchTab('tab-gps', null, this)" class="nav-item flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-2xl text-xl"><i class="fas fa-map-marker-alt"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Mapa</span></button>`;
+                mobHtml += `<button onclick="switchTab('tab-dashboard-admin', null, this)" class="nav-item active flex flex-col items-center gap-1 w-16 text-slate-400"><div class="nav-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg"><i class="fas fa-chart-pie"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Inicio</span></button>`;
+                mobHtml += `<button onclick="switchTab('tab-historial', null, this)" class="nav-item flex flex-col items-center gap-1 w-16 text-slate-400"><div class="nav-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg"><i class="fas fa-history"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Historial</span></button>`;
+                mobHtml += `<button onclick="switchTab('tab-carga', null, this)" class="nav-item flex flex-col items-center gap-1 w-16 text-slate-400"><div class="nav-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg"><i class="fas fa-plus"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Carga</span></button>`;
+                mobHtml += `<button onclick="switchTab('tab-gps', null, this)" class="nav-item flex flex-col items-center gap-1 w-16 text-slate-400"><div class="nav-icon w-10 h-8 flex items-center justify-center rounded-xl text-lg"><i class="fas fa-map-marker-alt"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Mapa</span></button>`;
             } else {
-                mobHtml += `<button onclick="switchTab('tab-dashboard-user', null, this)" class="nav-item active flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-2xl text-xl"><i class="fas fa-wallet"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Billetera</span></button>`;
-                mobHtml += `<button onclick="switchTab('tab-gps', null, this)" class="nav-item flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-2xl text-xl"><i class="fas fa-map-marker-alt"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Mapa</span></button>`;
+                mobHtml += `<button onclick="switchTab('tab-dashboard-user', null, this)" class="nav-item active flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-xl text-xl"><i class="fas fa-wallet"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Billetera</span></button>`;
+                mobHtml += `<button onclick="switchTab('tab-historial', null, this)" class="nav-item flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-xl text-xl"><i class="fas fa-history"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Historial</span></button>`;
+                mobHtml += `<button onclick="switchTab('tab-gps', null, this)" class="nav-item flex flex-col items-center gap-1 w-20 text-slate-400"><div class="nav-icon w-12 h-10 flex items-center justify-center rounded-xl text-xl"><i class="fas fa-map-marker-alt"></i></div><span class="text-[9px] font-black uppercase tracking-wide">Mapa</span></button>`;
             }
             mobNav.innerHTML = mobHtml;
             mobNav.classList.remove('hidden');
@@ -627,9 +667,7 @@
             document.getElementById('screen-app').classList.remove('hidden');
             
             const isAdmin = userRole === 'admin';
-            
             document.querySelectorAll('.admin-only').forEach(el => isAdmin ? el.classList.remove('hidden') : el.classList.add('hidden'));
-            document.getElementById('section-history').classList.remove('hidden');
 
             switchTab(isAdmin ? 'tab-dashboard-admin' : 'tab-dashboard-user');
             initMap();
@@ -638,6 +676,17 @@
         function switchTab(tabId, deskBtn = null, mobBtn = null) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(tabId).classList.remove('hidden');
+            
+            const titleMap = {
+                'tab-dashboard-admin': 'Panel Ejecutivo',
+                'tab-dashboard-user': 'Mi Billetera',
+                'tab-historial': 'Historial de Operaciones',
+                'tab-carga': 'Centro de Carga',
+                'tab-gps': 'Vehículo en Vivo'
+            };
+            if(document.getElementById('header-title')) {
+                document.getElementById('header-title').innerText = titleMap[tabId] || 'Tito-Trans';
+            }
             
             // Desk Nav Update
             if(deskBtn) {
@@ -1009,6 +1058,8 @@
         // GPS (POLLING HTTP)
         // Soluciona el bloqueo de WebSockets en Canvas / Iframes
         // ==========================
+        // GPS (POLLING HTTP & ROUTING)
+        // ==========================
         function initMap() {
             if(map) return;
             map = L.map('map', { zoomControl: false }).setView([-1.0545, -80.4595], 14);
@@ -1026,18 +1077,62 @@
             });
             titoMarker = L.marker([-1.0545, -80.4595], {icon: iconCar}).addTo(map);
             
-            // Reemplazo de WebSocket (channel) por HTTP Polling cada 5 seg
+            // Polling Activo para consultar posiciones
+            setInterval(pollLocations, 5000);
+        }
+
+        async function pollLocations() {
             if(userRole !== 'admin') {
-                setInterval(async () => {
-                    const { data, error } = await db.from('driver_location').select('lat, lng, updated_at').eq('id', 'current_location').single();
-                    if(!error && data) {
-                        titoMarker.setLatLng([data.lat, data.lng]);
-                        map.setView([data.lat, data.lng], 15);
-                        const date = new Date(data.updated_at);
-                        document.getElementById('gps-info-text').innerText = `Ubicación: ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+                // Pasajera consulta a Tito
+                const { data, error } = await db.from('driver_location').select('*').eq('id', 'tito').single();
+                if(!error && data) {
+                    titoMarker.setLatLng([data.lat, data.lng]);
+                    
+                    if(isTransmitting && myLastPos) {
+                        drawRoute(myLastPos.lat, myLastPos.lng, data.lat, data.lng);
                     }
-                }, 5000);
+                }
+            } else {
+                // Tito (Admin) consulta al resto de pasajeras
+                const { data, error } = await db.from('driver_location').select('*').neq('id', 'tito');
+                if(!error && data) {
+                    data.forEach(pax => {
+                        const timeDiff = new Date() - new Date(pax.updated_at);
+                        if(timeDiff > 15 * 60 * 1000) return; // Ignorar inactivos de más de 15 min
+
+                        if(!passengerMarkers[pax.id]) {
+                            const iconPax = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-lg"><i class="fas fa-female"></i></div>`,
+                                iconSize: [40, 40], iconAnchor: [20, 20]
+                            });
+                            passengerMarkers[pax.id] = L.marker([pax.lat, pax.lng], {icon: iconPax}).addTo(map)
+                                .bindPopup(`<b>${getUserName(pax.id)}</b>`);
+                        } else {
+                            passengerMarkers[pax.id].setLatLng([pax.lat, pax.lng]);
+                        }
+                    });
+                }
             }
+        }
+
+        async function drawRoute(lat1, lng1, lat2, lng2) {
+            try {
+                // Open Source Routing Machine
+                const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`);
+                const data = await res.json();
+                if(data.routes && data.routes[0]) {
+                    const route = data.routes[0];
+                    const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                    
+                    if(routeLayer) map.removeLayer(routeLayer);
+                    routeLayer = L.polyline(coords, {color: '#4f46e5', weight: 5, opacity: 0.8}).addTo(map);
+                    
+                    const distance = (route.distance / 1000).toFixed(1); // km
+                    const duration = Math.ceil(route.duration / 60); // minutes
+                    document.getElementById('gps-info-text').innerHTML = `Distancia: <b class="text-brand-600">${distance} km</b> | ETA: <b class="text-brand-600">${duration} min</b>`;
+                }
+            } catch(e) {}
         }
 
         function toggleGPS() {
@@ -1049,12 +1144,14 @@
             if(isTransmitting) {
                 if(watchId) clearInterval(watchId);
                 isTransmitting = false;
+                releaseWakeLock();
                 
                 btn.innerHTML = "<i class='fas fa-broadcast-tower'></i> Activar Señal";
                 btn.classList.replace('bg-rose-500', 'bg-brand-600');
                 btn.classList.replace('hover:bg-rose-600', 'hover:bg-brand-700');
                 indH.classList.add('hidden'); indH.classList.remove('flex');
                 info.innerText = "Motor en Pausa";
+                if(routeLayer) map.removeLayer(routeLayer);
                 showToast("Transmisión Satelital Detenida", "warning");
             } else {
                 if (!navigator.geolocation) {
@@ -1067,13 +1164,36 @@
                 }
 
                 info.innerText = "Conectando satélites...";
+                requestWakeLock();
                 
                 const sendLocation = async (pos) => {
                     const { latitude, longitude } = pos.coords;
-                    titoMarker.setLatLng([latitude, longitude]);
-                    map.setView([latitude, longitude], 16);
-                    info.innerText = "Transmitiendo ruta en tiempo real";
-                    await db.from('driver_location').upsert({ id: 'current_location', lat: latitude, lng: longitude, updated_at: new Date().toISOString() });
+                    myLastPos = { lat: latitude, lng: longitude };
+                    
+                    if (userRole === 'admin') {
+                        titoMarker.setLatLng([latitude, longitude]);
+                        map.setView([latitude, longitude], 16);
+                        info.innerText = "Transmitiendo ruta a las pasajeras";
+                    } else {
+                        // Mi marcador de pasajera
+                        if(!passengerMarkers[currentUser]) {
+                            const iconMe = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white border-2 border-white shadow-lg"><i class="fas fa-street-view"></i></div>`,
+                                iconSize: [40, 40], iconAnchor: [20, 20]
+                            });
+                            passengerMarkers[currentUser] = L.marker([latitude, longitude], {icon: iconMe}).addTo(map);
+                        } else {
+                            passengerMarkers[currentUser].setLatLng([latitude, longitude]);
+                        }
+                        map.setView([latitude, longitude], 15);
+                    }
+
+                    await db.from('driver_location').upsert({ 
+                        id: userRole === 'admin' ? 'tito' : currentUser, 
+                        lat: latitude, lng: longitude, 
+                        updated_at: new Date().toISOString() 
+                    });
                 };
 
                 const handleError = (err) => {
@@ -1084,17 +1204,17 @@
                 // Lectura Inmediata
                 navigator.geolocation.getCurrentPosition(sendLocation, handleError, { enableHighAccuracy: true });
                 
-                // Polling cada 5 segundos
+                // POLLING ACTIVO CADA 5 SEGUNDOS
                 watchId = setInterval(() => {
                     navigator.geolocation.getCurrentPosition(sendLocation, () => {}, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
                 }, 5000);
 
                 isTransmitting = true;
-                btn.innerHTML = "<i class='fas fa-stop-circle'></i> Detener GPS";
+                btn.innerHTML = "<i class='fas fa-stop-circle'></i> Detener Señal";
                 btn.classList.replace('bg-brand-600', 'bg-rose-500');
                 btn.classList.replace('hover:bg-brand-700', 'hover:bg-rose-600');
                 indH.classList.remove('hidden'); indH.classList.add('flex');
-                showToast("Señal GPS Activada Correctamente", "success");
+                showToast("Señal GPS y Rutas Activadas", "success");
             }
         }
     </script>
